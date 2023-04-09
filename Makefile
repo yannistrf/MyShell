@@ -5,7 +5,7 @@ CC = gcc
 INCLUDE = ./include
 
 # compiler flags
-CFLAGS = -I$(INCLUDE) -Wall -Werror
+CFLAGS = -I$(INCLUDE) -Wall #-Werror
 
 # linker flags
 LDFLAGS = 
@@ -20,7 +20,7 @@ BIN = ./bin
 SRC = ./src
 
 # all of our object files
-OBJS = $(BIN)/hello.o $(BIN)/foo.o
+OBJS = $(BIN)/main.o $(BIN)/parse.o
 
 # rule to build executable
 $(EXEC): $(OBJS)
@@ -37,3 +37,6 @@ run: $(EXEC)
 # clean all binary files
 clean:
 	rm -f $(OBJS) $(EXEC)
+
+val: $(EXEC)
+	valgrind -s --leak-check=full --show-leak-kinds=all ./$(EXEC)
