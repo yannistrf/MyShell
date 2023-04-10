@@ -5,10 +5,10 @@ CC = gcc
 INCLUDE = ./include
 
 # compiler flags
-CFLAGS = -I$(INCLUDE) -Wall #-Werror
+CFLAGS = -I$(INCLUDE) -Wall -g #-Werror
 
 # linker flags
-LDFLAGS = 
+LDFLAGS = -g
 
 # executable name
 EXEC = mysh
