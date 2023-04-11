@@ -20,7 +20,7 @@ BIN = ./bin
 SRC = ./src
 
 # all of our object files
-OBJS = $(BIN)/main.o $(BIN)/parse.o
+OBJS = $(BIN)/main.o $(BIN)/parse.o $(BIN)/util.o
 
 # rule to build executable
 $(EXEC): $(OBJS)

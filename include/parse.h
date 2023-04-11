@@ -1,6 +1,10 @@
-int pressed_enter(char*);
+#pragma once
+
+#include "util.h"
+
+
 char* remove_spaces(char*);
-char** semicolon_separation(char*, int*);
-char** pipe_seperation(char*, int*);
-void free_list(char**, int);
+int empty_line(char* line);
+void semicolon_separation(CommandParser* parser);
+void pipe_separation(CommandParser* parser, int command_no);
 char** get_arguments(char*, int*);

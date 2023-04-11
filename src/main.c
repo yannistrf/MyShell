@@ -7,7 +7,7 @@
 // #include <limits.h> // uncomment for PATH_MAX
 
 #include "parse.h"
-#include "built_in.h"
+// #include "util.h"
 
 #define PROMPT "$"
 #define PATH_MAX 1024
@@ -23,99 +23,61 @@ void prompt(char* path, char* username) {
 }
 
 int main() {
-    
+    char* username = getlogin();
     char path[PATH_MAX];
-    char* username;
-    char* line = NULL;
-    char* line_to_free;
-    size_t len = 0;
+    
+    CommandParser parser;
+    parser_init(&parser);
 
-    username = getlogin();
+    size_t buf_size = 0;
 
     while (1) {
         prompt(path, username);
+        // Allocates space for line
+        parser.line_size = getline(&parser.line, &buf_size, stdin) - 1;
+        printf("# %s\n", parser.line);
 
-        // getline allocates the neccessary space
-        getline(&line, &len, stdin);
-
-        // Store the address so we can free later
-        // bacuse strtok changes the string pointer
-        line_to_free = line;
-        int slen = strlen(line);
-
-
-        // if user presses enter do nothing
-        if (pressed_enter(line))
-            continue;
-        
         // Terminate string one char earlier, because of '\n'
-        line[slen-1] = '\0';
+        parser.line[parser.line_size] = '\0';
 
-        int command_size;
-        char** commands = semicolon_separation(line, &command_size);
+        if (empty_line(parser.line))
+            break;
+        
+        semicolon_separation(&parser);
+        for (int i = 0; i < parser.semi_size; i++) {
+            printf("<%s>\n", parser.semicolon_parsed_list[i]);
+            pipe_separation(&parser, i);
+            for (int j = 0; j < parser.pipe_size; j++) {
+                printf("*%s*\n", parser.pipe_parsed_list[j]);
 
-        for (int command_no = 0; command_no < command_size; command_no++) {
-
-            printf("| %s |\n", commands[command_no]);
-            int no_of_pipes;
-            char** programs = pipe_seperation(commands[command_no], &no_of_pipes);
-
-            for (int program_no = 0; program_no < no_of_pipes; program_no++) {
-
-                printf("| %s |\n", programs[program_no]);
                 int arg_size;
-                char** arguments = get_arguments(programs[program_no], &arg_size);
+                char** arguments = get_arguments(parser.pipe_parsed_list[j], &arg_size);
                 arguments = realloc(arguments, sizeof(char*) * (arg_size+1));
                 arguments[arg_size] = NULL;
 
-                for (int i = 0; i < arg_size; i++)
-                    printf("%s\n", arguments[i]);
+                // check for sys commands
 
+                // handle pipes
 
-                if (!strcmp(arguments[0], "exit")) {
-                    printf("Exiting...\n");
-                    free_list(arguments, arg_size);
-                    free_list(programs, no_of_pipes);
-                    free_list(commands, command_size);
-                    free(line_to_free);
-                    exit(EXIT_SUCCESS);
-                }
+                // handle redirections
 
-                if (!strcmp(arguments[0], "cd")) {
-                    if (arguments[2] != NULL) {
-                        fprintf(stderr, "cd: too many arguments\n");
-                        free_list(arguments, arg_size);
-                        continue;
-                    }
-
-                    if (chdir(arguments[1]) == -1) {
-                        perror("cd");
-                    }
-                    free_list(arguments, arg_size);
-                    continue;
-                }
-
-                // Check fork fail
                 pid_t pid = fork();
                 if (pid == 0) {
                     if (execvp(arguments[0], arguments) == -1) {
                         perror("mysh");
                         exit(EXIT_FAILURE);
-                    }                    
+                    }  
                 }
 
                 free_list(arguments, arg_size);
-            }
-
-            for (int program_no = 0; program_no < no_of_pipes; program_no++)
                 wait(NULL);
-
-            free_list(programs, no_of_pipes);
+            }
         }
 
-        free_list(commands, command_size);
-        line = NULL;
-        len = 0;
-        free(line_to_free);
+        
     }
+
+    free(parser.line);
+    free_list(parser.semicolon_parsed_list, parser.semi_size);
+    free_list(parser.pipe_parsed_list, parser.pipe_size);
 }

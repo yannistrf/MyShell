@@ -1,11 +1,20 @@
 #include <string.h>
 #include <stdlib.h>
+#include "parse.h"
 
-int pressed_enter(char* line) {
-    if (strlen(line) == 1)
+
+int empty_line(char* line) {
+    if (strlen(line) == 0)
         return 1;
 
-    return 0;
+    int i = 0;
+    while (line[i] != '\0') {
+        if (line[i] != ' ' && line[i] != '\t')
+            return 0;
+        i++;
+    }
+
+    return 1;
 }
 
 char* remove_spaces(char* str) {
@@ -20,47 +29,52 @@ char* remove_spaces(char* str) {
     return str;
 }
 
-char** semicolon_separation(char* line, int* size) {
-    char* token = strtok_r(line, ";", &line);
-    *size = 0;
 
-    char** token_list = NULL;
+void semicolon_separation(CommandParser* parser) {
+    char* line = parser->line;
+    char* token = strtok_r(line, ";", &line);
+
+    if (parser->semicolon_parsed_list != NULL)
+        free_list(parser->semicolon_parsed_list, parser->semi_size);
+    
+    parser->semicolon_parsed_list = NULL;
+    parser->semi_size = 0;
 
     while (token != NULL) {
         token = remove_spaces(token);
-        (*size)++;
-        token_list = realloc(token_list, sizeof(char*) * (*size));
-        token_list[*size-1] = malloc(strlen(token)+1);
-        strcpy(token_list[*size-1], token);
+        parser->semi_size++;
+        parser->semicolon_parsed_list = realloc(
+                parser->semicolon_parsed_list,
+                sizeof(char*) * parser->semi_size
+            );
+        parser->semicolon_parsed_list[parser->semi_size-1] = malloc(strlen(token)+1);
+        strcpy(parser->semicolon_parsed_list[parser->semi_size-1], token);
         token = strtok_r(NULL, ";", &line);
     }
-
-    return token_list;
 }
 
-char** pipe_seperation(char* command, int* size) {
-    char* token = strtok_r(command, "|", &command);
-    *size = 0;
 
-    char** token_list = NULL;
+void pipe_separation(CommandParser* parser, int command_no) {
+    char* command = parser->semicolon_parsed_list[command_no];
+    char* token = strtok_r(command, "|", &command);
+
+    if (parser->pipe_parsed_list != NULL)
+        free_list(parser->pipe_parsed_list, parser->pipe_size);
+
+    parser->pipe_parsed_list = NULL;
+    parser->pipe_size = 0;
 
     while (token != NULL) {
         token = remove_spaces(token);
-        (*size)++;
-        token_list = realloc(token_list, sizeof(char*) * (*size));
-        token_list[*size-1] = malloc(strlen(token)+1);
-        strcpy(token_list[*size-1], token);
+        parser->pipe_size++;
+        parser->pipe_parsed_list = realloc(
+                parser->pipe_parsed_list,
+                sizeof(char*) * parser->pipe_size
+            );
+        parser->pipe_parsed_list[parser->pipe_size-1] = malloc(strlen(token)+1);
+        strcpy(parser->pipe_parsed_list[parser->pipe_size-1], token);
         token = strtok_r(NULL, "|", &command);
     }
-
-    return token_list;
-}
-
-void free_list(char** list, int size) {
-    for (int i = 0; i < size; i++)
-        free(list[i]);
-
-    free(list);
 }
 
 int is_special_char(char* token) {
