@@ -1,14 +1,11 @@
 #pragma once
 
-typedef struct command_parser {
-    char* line;
-    int line_size;
-    char** semicolon_parsed_list;
-    int semi_size;
-    char** pipe_parsed_list;
-    int pipe_size;
-} CommandParser;
 
+#define PROMPT "$"
+#define PATH_MAX 1024
+
+void prompt(char* path, char* username);
+int empty_line(char* line);
+char* remove_spaces(char* str);
 void free_list(char** list, int size);
-void parser_init(CommandParser* parser);
-void parser_destroy(CommandParser* parser);
+int is_special_char(char* token);

@@ -6,21 +6,13 @@
 
 // #include <limits.h> // uncomment for PATH_MAX
 
-#include "parse.h"
-// #include "util.h"
+#include "parser.h"
+#include "sys_cmd.h"
+#include "util.h"
 
-#define PROMPT "$"
-#define PATH_MAX 1024
+#define READ 0
+#define WRITE 1
 
-void prompt(char* path, char* username) {
-    
-    if (getcwd(path, PATH_MAX) == NULL) {
-        perror("getcwd");
-        exit(EXIT_FAILURE);
-    }
-
-    printf("(%s): %s %s ", username, path, PROMPT);
-}
 
 int main() {
     char* username = getlogin();
@@ -35,49 +27,52 @@ int main() {
         prompt(path, username);
         // Allocates space for line
         parser.line_size = getline(&parser.line, &buf_size, stdin) - 1;
-        printf("# %s\n", parser.line);
+        // printf("# %s\n", parser.line);
 
         // Terminate string one char earlier, because of '\n'
         parser.line[parser.line_size] = '\0';
 
         if (empty_line(parser.line))
-            break;
+            continue;
         
         semicolon_separation(&parser);
         for (int i = 0; i < parser.semi_size; i++) {
-            printf("<%s>\n", parser.semicolon_parsed_list[i]);
+            // printf("<%s>\n", parser.semicolon_parsed_list[i]);
             pipe_separation(&parser, i);
+            // int* pipes[2] = malloc(sizeof(int[2]) * (parser.pipe_size-1));
+            // for (int pipe_no = 0; pipe_no < parser.pipe_size-1; pipe_no++)
+            //     pipe(pipes[pipe_no]);
             for (int j = 0; j < parser.pipe_size; j++) {
-                printf("*%s*\n", parser.pipe_parsed_list[j]);
+                // printf("*%s*\n", parser.pipe_parsed_list[j]);
 
-                int arg_size;
-                char** arguments = get_arguments(parser.pipe_parsed_list[j], &arg_size);
-                arguments = realloc(arguments, sizeof(char*) * (arg_size+1));
-                arguments[arg_size] = NULL;
-
-                // check for sys commands
+                get_arguments(&parser, j);
 
                 // handle pipes
+                // if (pipes != NULL) {
+                //     if (j != 0) {
+
+                //     }
+                // }
 
                 // handle redirections
 
+                SysCmd sys_cmd;
+                if ((sys_cmd = is_sys_cmd(parser.arguments[0]))) {
+                    exec_sys_cmd(sys_cmd, &parser);
+                    continue;
+                }
+
                 pid_t pid = fork();
                 if (pid == 0) {
-                    if (execvp(arguments[0], arguments) == -1) {
+                    if (execvp(parser.arguments[0], parser.arguments) == -1) {
                         perror("mysh");
+                        parser_destroy(&parser);
                         exit(EXIT_FAILURE);
                     }  
                 }
 
-                free_list(arguments, arg_size);
                 wait(NULL);
             }
         }
-
-        
     }
-
-    free(parser.line);
-    free_list(parser.semicolon_parsed_list, parser.semi_size);
-    free_list(parser.pipe_parsed_list, parser.pipe_size);
 }

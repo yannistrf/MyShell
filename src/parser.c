@@ -1,34 +1,21 @@
 #include <string.h>
 #include <stdlib.h>
-#include "parse.h"
+#include "parser.h"
+#include "util.h"
 
-
-int empty_line(char* line) {
-    if (strlen(line) == 0)
-        return 1;
-
-    int i = 0;
-    while (line[i] != '\0') {
-        if (line[i] != ' ' && line[i] != '\t')
-            return 0;
-        i++;
-    }
-
-    return 1;
+void parser_init(CommandParser* parser) {
+    parser->line = NULL;
+    parser->semicolon_parsed_list = NULL;
+    parser->pipe_parsed_list = NULL;
+    parser->arguments = NULL;
 }
 
-char* remove_spaces(char* str) {
-    while(*str == ' ')
-        str++;
-
-    int end = strlen(str)-1;
-    while (str[end] == ' ')
-        end--;
-    
-    str[end+1] = '\0';
-    return str;
+void parser_destroy(CommandParser* parser) {
+    free(parser->line);
+    free_list(parser->semicolon_parsed_list, parser->semi_size);
+    free_list(parser->pipe_parsed_list, parser->pipe_size);
+    free_list(parser->arguments, parser->arg_size);
 }
-
 
 void semicolon_separation(CommandParser* parser) {
     char* line = parser->line;
@@ -77,27 +64,30 @@ void pipe_separation(CommandParser* parser, int command_no) {
     }
 }
 
-int is_special_char(char* token) {
-    token = remove_spaces(token);
-    return !strcmp(token, ">") || !strcmp(token, ">>") || !strcmp(token, "&");
-}
 
-char** get_arguments(char* program, int* size) {
-    char* token = strtok_r(program, " ", &program);
-    *size = 0;
+void get_arguments(CommandParser* parser, int pipe_no) {
+    char* command = parser->pipe_parsed_list[pipe_no];
+    char* token = strtok_r(command, " ", &command);
 
-    char** token_list = NULL;
+    if (parser->arguments != NULL)
+        free_list(parser->arguments, parser->arg_size);
+
+    parser->arguments = NULL;
+    parser->arg_size = 0;
 
     while (token != NULL) {
         token = remove_spaces(token);
-        if (is_special_char(token))
-            break;
-        (*size)++;
-        token_list = realloc(token_list, sizeof(char*) * (*size));
-        token_list[*size-1] = malloc(strlen(token)+1);
-        strcpy(token_list[*size-1], token);
-        token = strtok_r(NULL, " ", &program);
+        parser->arg_size++;
+        parser->arguments = realloc(
+                parser->arguments,
+                sizeof(char*) * parser->arg_size
+            );
+        parser->arguments[parser->arg_size-1] = malloc(strlen(token)+1);
+        strcpy(parser->arguments[parser->arg_size-1], token);
+        token = strtok_r(NULL, " ", &command);
     }
 
-    return token_list;   
+    parser->arguments = realloc(parser->arguments, sizeof(char*) * (parser->arg_size+1));
+    parser->arguments[parser->arg_size] = NULL;
+    
 }
