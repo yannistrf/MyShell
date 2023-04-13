@@ -55,6 +55,9 @@ int main() {
                 // }
 
                 // handle redirections
+                int out_fd = dup(1);
+                handle_redirections(&parser, j);
+
 
                 SysCmd sys_cmd;
                 if ((sys_cmd = is_sys_cmd(parser.arguments[0]))) {
@@ -70,6 +73,8 @@ int main() {
                         exit(EXIT_FAILURE);
                     }  
                 }
+
+                dup2(out_fd, 1);
 
                 wait(NULL);
             }

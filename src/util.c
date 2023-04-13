@@ -48,6 +48,6 @@ void free_list(char** list, int size) {
 }
 
 int is_special_char(char* token) {
-    token = remove_spaces(token);
-    return !strcmp(token, ">") || !strcmp(token, ">>") || !strcmp(token, "&");
+    // token = remove_spaces(token);
+    return (!strcmp(token, ">") || !strcmp(token, ">>") || !strcmp(token, "&"));
 }
