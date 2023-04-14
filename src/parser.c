@@ -124,11 +124,31 @@ int handle_redirections(CommandParser* parser, int pipe_no) {
         }
 
         else if (!strcmp(token, "<")) {
+            token = strtok_r(NULL, " ", &command);
+            int fd;
+            mode_t mask = umask(0);
+            umask(mask);
+            if ((fd = open(token, O_RDONLY)) == -1) {
+                perror("open");
+                return -1;
+            }
             
+            dup2(fd, 0);
+            continue;
         }
 
         else if (!strcmp(token, ">>")) {
+            token = strtok_r(NULL, " ", &command);
+            int fd;
+            mode_t mask = umask(0);
+            umask(mask);
+            if ((fd = open(token, O_WRONLY | O_CREAT | O_APPEND, ~mask)) == -1) {
+                perror("open");
+                return -1;
+            }
             
+            dup2(fd, 1);
+            continue;
         }
 
         token = strtok_r(NULL, " ", &command);

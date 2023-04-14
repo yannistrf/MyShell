@@ -39,23 +39,29 @@ int main() {
         for (int i = 0; i < parser.semi_size; i++) {
             // printf("<%s>\n", parser.semicolon_parsed_list[i]);
             pipe_separation(&parser, i);
-            // int* pipes[2] = malloc(sizeof(int[2]) * (parser.pipe_size-1));
-            // for (int pipe_no = 0; pipe_no < parser.pipe_size-1; pipe_no++)
-            //     pipe(pipes[pipe_no]);
+            int pipes[parser.pipe_size-1][2];
+            for (int pipe_no = 0; pipe_no < parser.pipe_size-1; pipe_no++)
+                pipe(pipes[pipe_no]);
+
             for (int j = 0; j < parser.pipe_size; j++) {
                 // printf("*%s*\n", parser.pipe_parsed_list[j]);
+                int out_fd = dup(1);
+                int in_fd = dup(0);
 
                 get_arguments(&parser, j);
 
                 // handle pipes
-                // if (pipes != NULL) {
-                //     if (j != 0) {
+                if (sizeof(pipes) != 0) {
+                    if (j != 0) {
+                        dup2(pipes[j-1][READ], 0);
+                    }
 
-                //     }
-                // }
+                    if (j != parser.pipe_size - 1) {
+                        dup2(pipes[j][WRITE], 1);
+                    }
+                }
 
                 // handle redirections
-                int out_fd = dup(1);
                 handle_redirections(&parser, j);
 
 
@@ -75,9 +81,11 @@ int main() {
                 }
 
                 dup2(out_fd, 1);
+                dup2(in_fd, 0);
 
-                wait(NULL);
             }
+            for (int j = 0; j < parser.pipe_size; j++)
+                wait(NULL);
         }
     }
 }
