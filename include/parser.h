@@ -4,9 +4,9 @@ typedef struct command_parser {
     char* line;
     int line_size;
     char** semicolon_parsed_list;
-    int semi_size;
+    int semi_commands_size;
     char** pipe_parsed_list;
-    int pipe_size;
+    int pipe_commands_size;
     char** arguments;
     int arg_size;
 } CommandParser;

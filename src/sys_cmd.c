@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "sys_cmd.h"
 
 SysCmd is_sys_cmd(char* cmd) {
@@ -14,8 +15,9 @@ SysCmd is_sys_cmd(char* cmd) {
     return 0;
 }
 
-void sys_exit(CommandParser* parser) {
+void sys_exit(CommandParser* parser, int** pipes) {
     parser_destroy(parser);
+    destroy_pipes(pipes, parser->pipe_commands_size-1);
     printf("Exiting...\n");
     exit(EXIT_SUCCESS);
 }
@@ -43,10 +45,10 @@ void sys_destroyalias() {}
 
 void sys_history() {}
 
-void exec_sys_cmd(SysCmd cmd, CommandParser* parser) {
+void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes) {
     switch (cmd) {
         case EXIT:
-            sys_exit(parser);
+            sys_exit(parser, pipes);
             break;
         case CD:
             sys_cd(parser);

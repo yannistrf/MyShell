@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser.h"
+#include "pipes.h"
 #include "util.h"
 
 typedef enum {
@@ -12,4 +13,4 @@ typedef enum {
 } SysCmd;
 
 SysCmd is_sys_cmd(char* cmd);
-void exec_sys_cmd(SysCmd cmd, CommandParser* parser);
+void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes);

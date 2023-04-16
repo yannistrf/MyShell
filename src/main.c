@@ -4,14 +4,10 @@
 #include <string.h>
 #include <wait.h>
 
-// #include <limits.h> // uncomment for PATH_MAX
-
 #include "parser.h"
 #include "sys_cmd.h"
 #include "util.h"
-
-#define READ 0
-#define WRITE 1
+#include "pipes.h"
 
 
 int main() {
@@ -24,10 +20,11 @@ int main() {
     size_t buf_size = 0;
 
     while (1) {
+
         prompt(path, username);
+        
         // Allocates space for line
         parser.line_size = getline(&parser.line, &buf_size, stdin) - 1;
-        // printf("# %s\n", parser.line);
 
         // Terminate string one char earlier, because of '\n'
         parser.line[parser.line_size] = '\0';
@@ -36,62 +33,38 @@ int main() {
             continue;
         
         semicolon_separation(&parser);
-        for (int i = 0; i < parser.semi_size; i++) {
-            // printf("<%s>\n", parser.semicolon_parsed_list[i]);
-            pipe_separation(&parser, i);
-            int pipes[parser.pipe_size-1][2];
-            for (int pipe_no = 0; pipe_no < parser.pipe_size-1; pipe_no++)
-                pipe(pipes[pipe_no]);
+        for (int semi_command_no = 0; semi_command_no < parser.semi_commands_size; semi_command_no++) {
 
-            int out_fd = dup(1);
-            int in_fd = dup(0);
+            int fd0, fd1;
+            save_fds(&fd0, &fd1);
 
-            for (int j = 0; j < parser.pipe_size; j++) {
-                // printf("*%s*\n", parser.pipe_parsed_list[j]);
+            pipe_separation(&parser, semi_command_no);
+            int num_of_pipes = parser.pipe_commands_size-1;
+            int** pipes =  pipes_init(num_of_pipes);
 
-                get_arguments(&parser, j);
+            for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++) {
 
-                // handle pipes
-                if (sizeof(pipes) != 0) {
-                    if (j != 0) {
-                        dup2(pipes[j-1][READ], 0);
-                        close(pipes[j-1][READ]);
-                    }
-                    
-                    if (j != parser.pipe_size - 1) {
-                        dup2(pipes[j][WRITE], 1);
-                        close(pipes[j][WRITE]);
-                    }
-                }
+                get_arguments(&parser, pipe_command_no);
 
+                if (sizeof(pipes) != 0)
+                    handle_pipes(pipes, pipe_command_no, num_of_pipes);
 
-                // handle redirections
-                handle_redirections(&parser, j);
-
+                handle_redirections(&parser, pipe_command_no);
 
                 SysCmd sys_cmd;
-                if ((sys_cmd = is_sys_cmd(parser.arguments[0]))) {
-                    exec_sys_cmd(sys_cmd, &parser);
-                    continue;
-                }
+                if ((sys_cmd = is_sys_cmd(parser.arguments[0])))
+                    exec_sys_cmd(sys_cmd, &parser, pipes);
 
-                // handle fork fail
-                pid_t pid = fork();
-                if (pid == 0) {
-                    if (execvp(parser.arguments[0], parser.arguments) == -1) {
-                        perror(parser.arguments[0]);
-                        parser_destroy(&parser);
-                        exit(EXIT_FAILURE);
-                    }  
-                }
+                if (!sys_cmd)
+                    exec_user_cmd(&parser, pipes);
 
-                dup2(out_fd, 1);
-                dup2(in_fd, 0);
-
+                restore_fds(&fd0, &fd1);
             }
 
-            for (int j = 0; j < parser.pipe_size+1; j++)
+            for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++)
                 wait(NULL);
+
+            destroy_pipes(pipes, num_of_pipes);
         }
     }
 }
