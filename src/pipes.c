@@ -8,13 +8,19 @@
 #define WRITE 1
 
 int** pipes_init(int num_of_pipes) {
+
+    if (num_of_pipes < 0)
+        return NULL;
+
     int** pipes = malloc(sizeof(int*) * num_of_pipes);
     
     for (int pipe_no = 0; pipe_no < num_of_pipes; pipe_no++) {
         pipes[pipe_no] = malloc(sizeof(int*) * 2);
         
-        if (pipe(pipes[pipe_no]) == -1)
+        if (pipe(pipes[pipe_no]) == -1) {
+            perror("pipe");
             return NULL;
+        }
     }
 
     return pipes;

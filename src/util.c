@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "util.h"
 #include "pipes.h"
 
 void prompt(char* path, char* username) {
-    
+
     if (getcwd(path, PATH_MAX) == NULL) {
         perror("getcwd");
         exit(EXIT_FAILURE);
@@ -50,7 +51,11 @@ void free_list(void** list, int size) {
 }
 
 int is_special_char(char* token) {
-    return (!strcmp(token, ">") || !strcmp(token, ">>") || !strcmp(token, "<"));
+    return (!strcmp(token, ">") ||
+            !strcmp(token, ">>") ||
+            !strcmp(token, "<") ||
+            !strcmp(token, "&")
+            );
 }
 
 void save_fds(int* fd0, int* fd1) {
@@ -79,5 +84,13 @@ int exec_user_cmd(CommandParser* parser, int** pipes) {
         }
     }
 
-    return 0;
+    return pid;
+}
+
+void clean_bg_procs(int* bg_procs) {
+    int procs_num = *bg_procs;
+    for (int i = 0; i < procs_num; i++) {
+        if (waitpid(0, NULL, WNOHANG))
+            (*bg_procs)--;
+    }
 }

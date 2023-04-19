@@ -18,6 +18,7 @@ int main() {
     parser_init(&parser);
 
     size_t buf_size = 0;
+    int bg_procs = 0;
 
     while (1) {
 
@@ -38,17 +39,34 @@ int main() {
             int fd0, fd1;
             save_fds(&fd0, &fd1);
 
+            int runs_bg = 0;
+            int str_size = strlen(parser.semicolon_parsed_list[semi_command_no]);
+            char ch;
+            for (int i = str_size-1; i > 0; i--) {
+                ch = parser.semicolon_parsed_list[semi_command_no][i];
+                if (ch == ' ')
+                    continue;
+                
+                if (ch == '&') {
+                    runs_bg = 1;
+                    break;
+                }
+
+                break;
+            }
+            
             pipe_separation(&parser, semi_command_no);
             int num_of_pipes = parser.pipe_commands_size-1;
             int** pipes =  pipes_init(num_of_pipes);
+            if (pipes == NULL) continue;
+
+            pid_t pid;
 
             for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++) {
 
                 get_arguments(&parser, pipe_command_no);
-
-                if (sizeof(pipes) != 0)
-                    handle_pipes(pipes, pipe_command_no, num_of_pipes);
-
+            
+                handle_pipes(pipes, pipe_command_no, num_of_pipes);
                 handle_redirections(&parser, pipe_command_no);
 
                 SysCmd sys_cmd;
@@ -56,15 +74,25 @@ int main() {
                     exec_sys_cmd(sys_cmd, &parser, pipes);
 
                 if (!sys_cmd)
-                    exec_user_cmd(&parser, pipes);
+                    pid = exec_user_cmd(&parser, pipes);
+
+                if (pid != -1 && runs_bg)
+                    bg_procs++;
 
                 restore_fds(&fd0, &fd1);
             }
 
-            for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++)
-                wait(NULL);
+            if (!runs_bg) {
+                printf("runs fg\n");
+                // pid_t p;
+                waitpid(pid, NULL, 0);
+                for (int pipe_command_no = 1; pipe_command_no < parser.pipe_commands_size; pipe_command_no++)
+                    wait(NULL);
+                // printf("waited %d\n", p);
+            }
 
             destroy_pipes(pipes, num_of_pipes);
+            clean_bg_procs(&bg_procs);
         }
     }
 }

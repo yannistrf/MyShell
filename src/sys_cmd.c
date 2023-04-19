@@ -12,6 +12,9 @@ SysCmd is_sys_cmd(char* cmd) {
     if (!strcmp(cmd, "cd"))
         return CD;
 
+    if (!strcmp(cmd, "history"))
+        return HISTORY;
+    
     return 0;
 }
 
@@ -43,7 +46,29 @@ void sys_createalias() {}
 
 void sys_destroyalias() {}
 
-void sys_history() {}
+void sys_history(CommandParser* parser) {
+    if (parser->arg_size > 1) {
+        fprintf(stderr, "cd: too many arguments\n");
+        return;
+    }
+
+    char* file_name = ".mysh_history";
+    FILE* hist_file = fopen(file_name, "r");
+    if (hist_file == NULL) {
+        fprintf(stderr, "history: .mysh_history file not found\n");
+        return;
+    }
+
+    int MAX_LINE_SIZE = 256;
+    char line[MAX_LINE_SIZE];
+    int count = 1;
+    while (fgets(line, MAX_LINE_SIZE, hist_file)) {
+        printf("#%d %s", count, line);
+        count++;
+    }
+
+    fclose(hist_file);
+}
 
 void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes) {
     switch (cmd) {
@@ -52,6 +77,9 @@ void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes) {
             break;
         case CD:
             sys_cd(parser);
+            break;
+        case HISTORY:
+            sys_history(parser);
             break;
         default:
             break;
