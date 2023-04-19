@@ -157,3 +157,20 @@ int handle_redirections(CommandParser* parser, int pipe_no) {
 
     return 0;
 }
+
+int run_bg(char* command) {
+    int str_size = strlen(command);
+    char ch;
+    for (int i = str_size-1; i >= 0; i--) {
+        ch = command[i];
+        if (ch == ' ')
+            continue;
+        
+        if (ch == '&')
+            return 1;
+
+        return 0;
+    }
+
+    return 0;
+}

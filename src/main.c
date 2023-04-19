@@ -8,6 +8,7 @@
 #include "sys_cmd.h"
 #include "util.h"
 #include "pipes.h"
+#include "proc.h"
 
 
 int main() {
@@ -39,28 +40,14 @@ int main() {
             int fd0, fd1;
             save_fds(&fd0, &fd1);
 
-            int runs_bg = 0;
-            int str_size = strlen(parser.semicolon_parsed_list[semi_command_no]);
-            char ch;
-            for (int i = str_size-1; i > 0; i--) {
-                ch = parser.semicolon_parsed_list[semi_command_no][i];
-                if (ch == ' ')
-                    continue;
-                
-                if (ch == '&') {
-                    runs_bg = 1;
-                    break;
-                }
-
-                break;
-            }
+            int runs_bg = run_bg(parser.semicolon_parsed_list[semi_command_no]);
             
             pipe_separation(&parser, semi_command_no);
             int num_of_pipes = parser.pipe_commands_size-1;
             int** pipes =  pipes_init(num_of_pipes);
             if (pipes == NULL) continue;
 
-            pid_t pid;
+            pid_t pids[parser.pipe_commands_size];
 
             for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++) {
 
@@ -74,22 +61,16 @@ int main() {
                     exec_sys_cmd(sys_cmd, &parser, pipes);
 
                 if (!sys_cmd)
-                    pid = exec_user_cmd(&parser, pipes);
+                    pids[pipe_command_no] = exec_user_cmd(&parser, pipes);
 
-                if (pid != -1 && runs_bg)
+                if (runs_bg)
                     bg_procs++;
 
                 restore_fds(&fd0, &fd1);
             }
 
-            if (!runs_bg) {
-                printf("runs fg\n");
-                // pid_t p;
-                waitpid(pid, NULL, 0);
-                for (int pipe_command_no = 1; pipe_command_no < parser.pipe_commands_size; pipe_command_no++)
-                    wait(NULL);
-                // printf("waited %d\n", p);
-            }
+            if (!runs_bg)
+                clean_fg_procs(pids, parser.pipe_commands_size);
 
             destroy_pipes(pipes, num_of_pipes);
             clean_bg_procs(&bg_procs);
