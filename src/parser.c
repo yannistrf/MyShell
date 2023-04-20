@@ -23,7 +23,9 @@ void parser_destroy(CommandParser* parser) {
 }
 
 void semicolon_separation(CommandParser* parser) {
-    char* line = parser->line;
+    char* line = malloc(strlen(parser->line)+1);
+    char* temp = line;
+    strcpy(line, parser->line);
     char* token = strtok_r(line, ";", &line);
 
     if (parser->semicolon_parsed_list != NULL)
@@ -43,11 +45,15 @@ void semicolon_separation(CommandParser* parser) {
         strcpy(parser->semicolon_parsed_list[parser->semi_commands_size-1], token);
         token = strtok_r(NULL, ";", &line);
     }
+
+    free(temp);
 }
 
 
 void pipe_separation(CommandParser* parser, int command_no) {
-    char* command = parser->semicolon_parsed_list[command_no];
+    char* command = malloc(strlen(parser->semicolon_parsed_list[command_no])+1);
+    char* temp = command;
+    strcpy(command, parser->semicolon_parsed_list[command_no]);
     char* token = strtok_r(command, "|", &command);
 
     if (parser->pipe_parsed_list != NULL)
@@ -67,6 +73,8 @@ void pipe_separation(CommandParser* parser, int command_no) {
         strcpy(parser->pipe_parsed_list[parser->pipe_commands_size-1], token);
         token = strtok_r(NULL, "|", &command);
     }
+
+    free(temp);
 }
 
 
@@ -84,10 +92,37 @@ void get_arguments(CommandParser* parser, int pipe_no) {
     parser->arg_size = 0;
 
     while (token != NULL) {
-        token = remove_spaces(token);
+        // token = remove_spaces(token);
 
         if (is_special_char(token))
             break;
+        
+        int found_quotes = 0;
+
+        if (token[0] == '"') {
+            found_quotes = 1;
+            char* multi_word_arg = malloc(1);
+            strcpy(multi_word_arg, "\0");
+            token++;
+            int end_quotes = 0;
+            while (!end_quotes) {
+
+                if (token[strlen(token)-1] == '"') {
+                    token[strlen(token)-1] = '\0';
+                    end_quotes = 1;
+                }
+
+                multi_word_arg = realloc(multi_word_arg, strlen(multi_word_arg) + strlen(token) + 2 - end_quotes);
+                strcat(multi_word_arg, token);
+                if (!end_quotes) {
+                    strcat(multi_word_arg, " ");
+                    token = strtok_r(NULL, " ", &command);
+                }
+            }
+
+            token = multi_word_arg;
+        }
+
         
         parser->arg_size++;
         parser->arguments = realloc(
@@ -96,7 +131,12 @@ void get_arguments(CommandParser* parser, int pipe_no) {
             );
         parser->arguments[parser->arg_size-1] = malloc(strlen(token)+1);
         strcpy(parser->arguments[parser->arg_size-1], token);
+
+        if (found_quotes)
+            free(token);
+
         token = strtok_r(NULL, " ", &command);
+        
     }
 
     parser->arguments = realloc(parser->arguments, sizeof(char*) * (parser->arg_size+1));
@@ -106,7 +146,9 @@ void get_arguments(CommandParser* parser, int pipe_no) {
 
 int handle_redirections(CommandParser* parser, int pipe_no) {
     
-    char* command = parser->pipe_parsed_list[pipe_no];
+    char* command = malloc(strlen(parser->pipe_parsed_list[pipe_no])+1);
+    char* temp = command;
+    strcpy(command, parser->pipe_parsed_list[pipe_no]);
     char* token = strtok_r(command, " ", &command);
 
     while(token != NULL) {
@@ -155,6 +197,7 @@ int handle_redirections(CommandParser* parser, int pipe_no) {
         token = strtok_r(NULL, " ", &command);
     }
 
+    free(temp);
     return 0;
 }
 
@@ -166,7 +209,7 @@ int run_bg(char* command) {
         if (ch == ' ')
             continue;
         
-        if (ch == '&')
+        if (ch == '&' && command[i-1] == ' ')
             return 1;
 
         return 0;

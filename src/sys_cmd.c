@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "sys_cmd.h"
+#include "alias.h"
 
 SysCmd is_sys_cmd(char* cmd) {
     if (!strcmp(cmd, "exit"))
@@ -15,12 +16,22 @@ SysCmd is_sys_cmd(char* cmd) {
     if (!strcmp(cmd, "history"))
         return HISTORY;
     
+    if (!strcmp(cmd, "createalias"))
+        return CREATEALIAS;
+    
+    if (!strcmp(cmd, "destroyalias"))
+        return DESTROYALIAS;
+
+    if (!strcmp(cmd, "printaliases"))
+        return PRINTALIASES;
+    
     return 0;
 }
 
-void sys_exit(CommandParser* parser, int** pipes) {
+void sys_exit(CommandParser* parser, int** pipes, AliasTable* altable) {
     parser_destroy(parser);
     destroy_pipes(pipes, parser->pipe_commands_size-1);
+    alias_table_destroy(altable);
     printf("Exiting...\n");
     exit(EXIT_SUCCESS);
 }
@@ -41,10 +52,6 @@ void sys_cd(CommandParser* parser) {
         perror("cd");
 
 }
-
-void sys_createalias() {}
-
-void sys_destroyalias() {}
 
 void sys_history(CommandParser* parser) {
     if (parser->arg_size > 1) {
@@ -70,16 +77,25 @@ void sys_history(CommandParser* parser) {
     fclose(hist_file);
 }
 
-void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes) {
+void exec_sys_cmd(SysCmd cmd, CommandParser* parser, int** pipes, AliasTable* altable) {
     switch (cmd) {
         case EXIT:
-            sys_exit(parser, pipes);
+            sys_exit(parser, pipes, altable);
             break;
         case CD:
             sys_cd(parser);
             break;
         case HISTORY:
             sys_history(parser);
+            break;
+        case CREATEALIAS:
+            create_alias(altable, parser);
+            break;
+        case DESTROYALIAS:
+            destroy_alias(parser, altable);
+            break;
+        case PRINTALIASES:
+            print_aliases(parser, altable);
             break;
         default:
             break;

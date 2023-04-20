@@ -9,7 +9,7 @@
 #include "util.h"
 #include "pipes.h"
 #include "proc.h"
-
+#include "alias.h"
 
 int main() {
     char* username = getlogin();
@@ -17,6 +17,9 @@ int main() {
     
     CommandParser parser;
     parser_init(&parser);
+
+    AliasTable altable;
+    alias_table_init(&altable);
 
     size_t buf_size = 0;
     int bg_procs = 0;
@@ -52,16 +55,22 @@ int main() {
             for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++) {
 
                 get_arguments(&parser, pipe_command_no);
+                int alias_no;
+                if ((alias_no = found_alias(parser.arguments[0], &altable)) != -1) {
+                    replace_alias(&parser, &altable, alias_no);
+                }
             
                 handle_pipes(pipes, pipe_command_no, num_of_pipes);
                 handle_redirections(&parser, pipe_command_no);
 
                 SysCmd sys_cmd;
-                if ((sys_cmd = is_sys_cmd(parser.arguments[0])))
-                    exec_sys_cmd(sys_cmd, &parser, pipes);
+                if ((sys_cmd = is_sys_cmd(parser.arguments[0]))) {
+                    exec_sys_cmd(sys_cmd, &parser, pipes, &altable);
+                    pids[pipe_command_no] = 0;
+                }
 
                 if (!sys_cmd)
-                    pids[pipe_command_no] = exec_user_cmd(&parser, pipes);
+                    pids[pipe_command_no] = exec_user_cmd(&parser, pipes, &altable);
 
                 if (runs_bg)
                     bg_procs++;

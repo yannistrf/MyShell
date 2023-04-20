@@ -5,8 +5,7 @@
 #include "proc.h"
 #include "pipes.h"
 
-
-int exec_user_cmd(CommandParser* parser, int** pipes) {
+int exec_user_cmd(CommandParser* parser, int** pipes, AliasTable* altable) {
     int pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -18,6 +17,7 @@ int exec_user_cmd(CommandParser* parser, int** pipes) {
             perror(parser->arguments[0]);
             parser_destroy(parser);
             destroy_pipes(pipes, parser->pipe_commands_size-1);
+            alias_table_destroy(altable);
             exit(EXIT_FAILURE);
         }
     }
@@ -26,8 +26,11 @@ int exec_user_cmd(CommandParser* parser, int** pipes) {
 }
 
 void clean_fg_procs(pid_t* procs, int size) {
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++) {
+        if (procs[i] == 0)
+            continue;
         waitpid(procs[i], NULL, 0);
+    }
 }
 
 void clean_bg_procs(int* bg_procs) {
