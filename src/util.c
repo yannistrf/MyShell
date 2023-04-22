@@ -17,6 +17,7 @@ void prompt(char* path, char* username) {
     printf("(%s): %s %s ", username, path, PROMPT);
 }
 
+// Returns 1 if the line is empty, 0 otherwise
 int empty_line(char* line) {
     if (strlen(line) == 0)
         return 1;
@@ -31,6 +32,7 @@ int empty_line(char* line) {
     return 1;
 }
 
+// Removes spaces at the start and at the end of the string
 char* remove_spaces(char* str) {
     while(*str == ' ')
         str++;
@@ -43,6 +45,7 @@ char* remove_spaces(char* str) {
     return str;
 }
 
+// Can free any 2d array
 void free_list(void** list, int size) {
     for (int i = 0; i < size; i++)
         free(list[i]);
@@ -51,11 +54,12 @@ void free_list(void** list, int size) {
 }
 
 int is_special_char(char* token) {
-    return (!strcmp(token, ">") ||
+    return (
+            !strcmp(token, ">") ||
             !strcmp(token, ">>") ||
             !strcmp(token, "<") ||
             !strcmp(token, "&")
-            );
+        );
 }
 
 void save_fds(int* fd0, int* fd1) {

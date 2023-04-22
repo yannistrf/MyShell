@@ -5,7 +5,8 @@
 #include "proc.h"
 #include "pipes.h"
 
-int exec_user_cmd(CommandParser* parser, int** pipes, AliasTable* altable) {
+int exec_user_cmd(MyShell* sh) {
+
     int pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -13,11 +14,9 @@ int exec_user_cmd(CommandParser* parser, int** pipes, AliasTable* altable) {
     }
 
     if (pid == 0) {
-        if ((execvp(parser->arguments[0], parser->arguments)) == -1) {
-            perror(parser->arguments[0]);
-            parser_destroy(parser);
-            destroy_pipes(pipes, parser->pipe_commands_size-1);
-            alias_table_destroy(altable);
+        if ((execvp(sh->parser.arguments[0], sh->parser.arguments)) == -1) {
+            perror(sh->parser.arguments[0]);
+            shell_destroy(sh);
             exit(EXIT_FAILURE);
         }
     }
@@ -26,6 +25,7 @@ int exec_user_cmd(CommandParser* parser, int** pipes, AliasTable* altable) {
 }
 
 void clean_fg_procs(pid_t* procs, int size) {
+
     for (int i = 0; i < size; i++) {
         if (procs[i] == 0)
             continue;
@@ -33,10 +33,14 @@ void clean_fg_procs(pid_t* procs, int size) {
     }
 }
 
-void clean_bg_procs(int* bg_procs) {
-    int procs_num = *bg_procs;
+// Cleans up any processes that are finished and
+// were running in the background
+void clean_bg_procs(int* bg_procs_num) {
+
+    int procs_num = *bg_procs_num;
     for (int i = 0; i < procs_num; i++) {
+        // If no process has finished, don't block
         if (waitpid(0, NULL, WNOHANG))
-            (*bg_procs)--;
+            (*bg_procs_num)--;
     }
 }

@@ -1,5 +1,15 @@
 #pragma once
 
-int** pipes_init(int num_of_pipes);
-void destroy_pipes(int** pipes, int size);
-void handle_pipes(int** pipes, int piped_proc_no, int num_of_pipes);
+// The struct that holds the information
+// for the current pipes
+typedef struct {
+
+    int** table;    // the actual pipe descriptors
+    int size;       // the number of the pipes
+    
+} Pipes;
+
+
+void pipes_init(Pipes* pipes);
+void destroy_pipes(Pipes* pipes);
+void handle_pipes(Pipes* pipes, int proc_no);

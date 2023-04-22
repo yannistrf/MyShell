@@ -4,6 +4,7 @@
 #include <string.h>
 #include <wait.h>
 
+#include "shell.h"
 #include "parser.h"
 #include "sys_cmd.h"
 #include "util.h"
@@ -12,77 +13,75 @@
 #include "alias.h"
 
 int main() {
-    char* username = getlogin();
-    char path[PATH_MAX];
-    
-    CommandParser parser;
-    parser_init(&parser);
 
-    AliasTable altable;
-    alias_table_init(&altable);
-
+    MyShell shell;
+    shell_init(&shell);
     size_t buf_size = 0;
-    int bg_procs = 0;
 
     while (1) {
 
-        prompt(path, username);
+        prompt(shell.path, shell.username);
         
-        // Allocates space for line
-        parser.line_size = getline(&parser.line, &buf_size, stdin) - 1;
+        // Allocates space for line, don't forget to free
+        shell.parser.line_size = getline(&shell.parser.line, &buf_size, stdin) - 1;
 
         // Terminate string one char earlier, because of '\n'
-        parser.line[parser.line_size] = '\0';
+        shell.parser.line[shell.parser.line_size] = '\0';
 
-        if (empty_line(parser.line))
+        if (empty_line(shell.parser.line))
             continue;
         
-        semicolon_separation(&parser);
-        for (int semi_command_no = 0; semi_command_no < parser.semi_commands_size; semi_command_no++) {
+        semicolon_separation(&shell.parser);
+        // Loop through the ";" seperated tokens
+        for (int semi_command_no = 0; semi_command_no < shell.parser.semi_commands_size; semi_command_no++) {
 
-            int fd0, fd1;
-            save_fds(&fd0, &fd1);
+            save_fds(&shell.fd0, &shell.fd1);
 
-            int runs_bg = run_bg(parser.semicolon_parsed_list[semi_command_no]);
+            int runs_bg = run_bg(shell.parser.semicolon_parsed_list[semi_command_no]);
             
-            pipe_separation(&parser, semi_command_no);
-            int num_of_pipes = parser.pipe_commands_size-1;
-            int** pipes =  pipes_init(num_of_pipes);
-            if (pipes == NULL) continue;
+            pipe_separation(&shell.parser, semi_command_no);
+            shell.pipes.size = shell.parser.pipe_commands_size - 1;
+            pipes_init(&shell.pipes);
 
-            pid_t pids[parser.pipe_commands_size];
+            shell.curr_procs = malloc(sizeof(pid_t) * shell.parser.pipe_commands_size);
 
-            for (int pipe_command_no = 0; pipe_command_no < parser.pipe_commands_size; pipe_command_no++) {
+            // Loop through the "|" seperated tokens
+            for (int pipe_command_no = 0; pipe_command_no < shell.parser.pipe_commands_size; pipe_command_no++) {
 
-                get_arguments(&parser, pipe_command_no);
+                get_arguments(&shell.parser, pipe_command_no);
+
                 int alias_no;
-                if ((alias_no = found_alias(parser.arguments[0], &altable)) != -1) {
-                    replace_alias(&parser, &altable, alias_no);
+                if ((alias_no = found_alias(shell.parser.arguments[0], &shell.aliases)) != -1) {
+                    replace_alias(&shell.parser, &shell.aliases, alias_no);
                 }
             
-                handle_pipes(pipes, pipe_command_no, num_of_pipes);
-                handle_redirections(&parser, pipe_command_no);
+                handle_pipes(&shell.pipes, pipe_command_no);
+                handle_redirections(&shell.parser, pipe_command_no);
 
                 SysCmd sys_cmd;
-                if ((sys_cmd = is_sys_cmd(parser.arguments[0]))) {
-                    exec_sys_cmd(sys_cmd, &parser, pipes, &altable);
-                    pids[pipe_command_no] = 0;
+                if ((sys_cmd = is_sys_cmd(shell.parser.arguments[0]))) {
+                    exec_sys_cmd(sys_cmd, &shell);
+                    // System commands don't get forked, shouldn't wait for them
+                    shell.curr_procs[pipe_command_no] = 0;
                 }
 
                 if (!sys_cmd)
-                    pids[pipe_command_no] = exec_user_cmd(&parser, pipes, &altable);
+                    shell.curr_procs[pipe_command_no] = exec_user_cmd(&shell);
 
                 if (runs_bg)
-                    bg_procs++;
+                    shell.bg_procs_num++;
 
-                restore_fds(&fd0, &fd1);
+                restore_fds(&shell.fd0, &shell.fd1);
             }
 
             if (!runs_bg)
-                clean_fg_procs(pids, parser.pipe_commands_size);
+                clean_fg_procs(shell.curr_procs, shell.parser.pipe_commands_size);
 
-            destroy_pipes(pipes, num_of_pipes);
-            clean_bg_procs(&bg_procs);
+            destroy_pipes(&shell.pipes);
+            // Clean up any background processes that finished their execution
+            // Gets called in every iteration (non-blocking)
+            clean_bg_procs(&shell.bg_procs_num);
+            free(shell.curr_procs);
         }
     }
 }
