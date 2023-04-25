@@ -11,6 +11,7 @@
 void parser_init(CommandParser* parser) {
 
     parser->line = NULL;
+    parser->line_buf_size = 0;
     parser->semicolon_parsed_list = NULL;
     parser->pipe_parsed_list = NULL;
     parser->arguments = NULL;

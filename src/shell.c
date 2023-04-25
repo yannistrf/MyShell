@@ -8,6 +8,7 @@ void shell_init(MyShell* sh) {
     parser_init(&sh->parser);
     aliases_init(&sh->aliases);
     sh->bg_procs_num = 0;
+    history_init(&sh->history);
 }
 
 void shell_destroy(MyShell* sh) {
@@ -15,4 +16,5 @@ void shell_destroy(MyShell* sh) {
     destroy_pipes(&sh->pipes);
     aliases_destroy(&sh->aliases);
     free(sh->curr_procs);
+    history_destroy(&sh->history);
 }

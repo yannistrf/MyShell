@@ -21,7 +21,8 @@ SRC = ./src
 
 # all of our object files
 OBJS = 	$(BIN)/main.o $(BIN)/shell.o $(BIN)/parser.o $(BIN)/util.o \
-		$(BIN)/sys_cmd.o $(BIN)/pipes.o $(BIN)/proc.o $(BIN)/alias.o
+		$(BIN)/sys_cmd.o $(BIN)/pipes.o $(BIN)/proc.o $(BIN)/alias.o \
+		$(BIN)/history.o
 
 # rule to build executable
 $(EXEC): $(OBJS)
@@ -40,4 +41,4 @@ clean:
 	rm -f $(OBJS) $(EXEC)
 
 val: $(EXEC)
-	valgrind -s --leak-check=full --show-leak-kinds=all ./$(EXEC)
+	valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(EXEC)

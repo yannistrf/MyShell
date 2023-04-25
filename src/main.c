@@ -11,19 +11,19 @@
 #include "pipes.h"
 #include "proc.h"
 #include "alias.h"
+#include "history.h"
 
 int main() {
 
     MyShell shell;
     shell_init(&shell);
-    size_t buf_size = 0;
 
     while (1) {
 
         prompt(shell.path, shell.username);
         
         // Allocates space for line, don't forget to free
-        shell.parser.line_size = getline(&shell.parser.line, &buf_size, stdin) - 1;
+        shell.parser.line_size = getline(&shell.parser.line, &shell.parser.line_buf_size, stdin) - 1;
 
         // Terminate string one char earlier, because of '\n'
         shell.parser.line[shell.parser.line_size] = '\0';
@@ -31,6 +31,12 @@ int main() {
         if (empty_line(shell.parser.line))
             continue;
         
+        // Check for history commands
+        if (replace_history(&shell.history, &shell.parser) == -1)
+            continue;
+        // Put the line inside the history table
+        history_insert(&shell.history, shell.parser.line);
+
         semicolon_separation(&shell.parser);
         // Loop through the ";" seperated tokens
         for (int semi_command_no = 0; semi_command_no < shell.parser.semi_commands_size; semi_command_no++) {
@@ -49,7 +55,7 @@ int main() {
             for (int pipe_command_no = 0; pipe_command_no < shell.parser.pipe_commands_size; pipe_command_no++) {
 
                 get_arguments(&shell.parser, pipe_command_no);
-
+                
                 int alias_no;
                 if ((alias_no = found_alias(shell.parser.arguments[0], &shell.aliases)) != -1) {
                     replace_alias(&shell.parser, &shell.aliases, alias_no);

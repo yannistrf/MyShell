@@ -6,6 +6,7 @@
 #include "sys_cmd.h"
 #include "shell.h"
 #include "alias.h"
+#include "history.h"
 
 // Given a string, returns the sys_cmd, if there is one
 // If there is not one returns 0
@@ -56,30 +57,6 @@ void sys_cd(CommandParser* parser) {
 
 }
 
-void sys_history(CommandParser* parser) {
-    // if (parser->arg_size > 1) {
-    //     fprintf(stderr, "cd: too many arguments\n");
-    //     return;
-    // }
-
-    // char* file_name = ".mysh_history";
-    // FILE* hist_file = fopen(file_name, "r");
-    // if (hist_file == NULL) {
-    //     fprintf(stderr, "history: .mysh_history file not found\n");
-    //     return;
-    // }
-
-    // int MAX_LINE_SIZE = 256;
-    // char line[MAX_LINE_SIZE];
-    // int count = 1;
-    // while (fgets(line, MAX_LINE_SIZE, hist_file)) {
-    //     printf("#%d %s", count, line);
-    //     count++;
-    // }
-
-    // fclose(hist_file);
-}
-
 // Responsible to execute the given system command
 // with the appropriate arguments
 void exec_sys_cmd(SysCmd cmd, MyShell* sh) {
@@ -91,7 +68,7 @@ void exec_sys_cmd(SysCmd cmd, MyShell* sh) {
             sys_cd(&sh->parser);
             break;
         case HISTORY:
-            // sys_history(parser);
+            print_history(&sh->parser, &sh->history);
             break;
         case CREATEALIAS:
             create_alias(&sh->parser, &sh->aliases);

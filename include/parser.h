@@ -8,6 +8,7 @@
 typedef struct {
 
     char* line;
+    size_t line_buf_size;
     int line_size;
     char** semicolon_parsed_list;
     int semi_commands_size;

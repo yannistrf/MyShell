@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "pipes.h"
 #include "alias.h"
+#include "history.h"
 
 /*
     The struct that holds all of the
@@ -21,7 +22,8 @@ typedef struct {
     Pipes pipes;
     int* curr_procs;        // A table with the pids of the processes running
     int bg_procs_num;       // How many process are running in the background
-    
+    History history;
+
 } MyShell;
 
 
