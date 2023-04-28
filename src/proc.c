@@ -3,9 +3,9 @@
 #include <sys/wait.h>
 
 #include "proc.h"
-#include "pipes.h"
+#include "sig.h"
 
-int exec_user_cmd(MyShell* sh) {
+int exec_user_cmd(MyShell* sh, int run_bg) {
 
     int pid = fork();
     if (pid == -1) {
@@ -14,6 +14,8 @@ int exec_user_cmd(MyShell* sh) {
     }
 
     if (pid == 0) {
+        if (!run_bg)
+            sig_handle_child();
         if ((execvp(sh->parser.arguments[0], sh->parser.arguments)) == -1) {
             perror(sh->parser.arguments[0]);
             shell_destroy(sh);
@@ -29,7 +31,7 @@ void clean_fg_procs(pid_t* procs, int size) {
     for (int i = 0; i < size; i++) {
         if (procs[i] == 0)
             continue;
-        waitpid(procs[i], NULL, 0);
+        waitpid(procs[i], NULL, WUNTRACED);
     }
 }
 

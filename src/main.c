@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <wait.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -12,11 +11,13 @@
 #include "proc.h"
 #include "alias.h"
 #include "history.h"
+#include "sig.h"
 
 int main() {
 
     MyShell shell;
     shell_init(&shell);
+    sig_handle_parent();
 
     while (1) {
 
@@ -72,7 +73,7 @@ int main() {
                 }
 
                 if (!sys_cmd)
-                    shell.curr_procs[pipe_command_no] = exec_user_cmd(&shell);
+                    shell.curr_procs[pipe_command_no] = exec_user_cmd(&shell, runs_bg);
 
                 if (runs_bg)
                     shell.bg_procs_num++;

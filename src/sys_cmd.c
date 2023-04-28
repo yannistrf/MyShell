@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 #include "sys_cmd.h"
-#include "shell.h"
 #include "alias.h"
 #include "history.h"
 

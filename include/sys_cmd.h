@@ -1,10 +1,6 @@
 #pragma once
 
 #include "shell.h"
-#include "parser.h"
-#include "pipes.h"
-#include "util.h"
-#include "alias.h"
 
 /*
     Here is the mapping of every

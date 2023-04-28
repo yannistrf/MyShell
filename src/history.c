@@ -5,7 +5,7 @@
 #include "history.h"
 #include "util.h"
 
-#define MAXSIZE 5
+#define MAXSIZE 20
 
 
 void history_init(History* history) {

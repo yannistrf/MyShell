@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 
 #include "util.h"
-#include "pipes.h"
 
 void prompt(char* path, char* username) {
 
