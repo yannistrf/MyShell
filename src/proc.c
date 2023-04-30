@@ -29,6 +29,7 @@ int exec_user_cmd(MyShell* sh, int run_bg) {
 void clean_fg_procs(pid_t* procs, int size) {
 
     for (int i = 0; i < size; i++) {
+        // Don't wait for sys commands
         if (procs[i] == 0)
             continue;
         waitpid(procs[i], NULL, WUNTRACED);

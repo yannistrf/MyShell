@@ -22,7 +22,7 @@ SRC = ./src
 # all of our object files
 OBJS = 	$(BIN)/main.o $(BIN)/shell.o $(BIN)/parser.o $(BIN)/util.o \
 		$(BIN)/sys_cmd.o $(BIN)/pipes.o $(BIN)/proc.o $(BIN)/alias.o \
-		$(BIN)/history.o $(BIN)/sig.o
+		$(BIN)/history.o $(BIN)/sig.o $(BIN)/wildchar.o
 
 # rule to build executable
 $(EXEC): $(OBJS)

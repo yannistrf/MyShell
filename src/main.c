@@ -12,6 +12,7 @@
 #include "alias.h"
 #include "history.h"
 #include "sig.h"
+#include "wildchar.h"
 
 int main() {
 
@@ -61,6 +62,8 @@ int main() {
                 if ((alias_no = found_alias(shell.parser.arguments[0], &shell.aliases)) != -1) {
                     replace_alias(&shell.parser, &shell.aliases, alias_no);
                 }
+                
+                replace_wildchars(&shell.parser);
             
                 handle_pipes(&shell.pipes, pipe_command_no);
                 handle_redirections(&shell.parser, pipe_command_no);
