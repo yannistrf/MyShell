@@ -82,6 +82,16 @@ void create_alias(CommandParser* parser, Aliases* aliases) {
         return;
     }
 
+    // Handle the case where there is already an alias with that name
+    // Just replace the command part of the pair
+    int alias_no;
+    if ((alias_no = found_alias(parser->arguments[1], aliases)) != -1) {
+        free(aliases->table[alias_no][1]);
+        aliases->table[alias_no][1] = malloc(strlen(parser->arguments[2])+1);
+        strcpy(aliases->table[alias_no][1], parser->arguments[2]);
+        return;
+    }
+
     // Get args and allocate the space for the strings
     char* alias = malloc(strlen(parser->arguments[1])+1);
     strcpy(alias, parser->arguments[1]);
