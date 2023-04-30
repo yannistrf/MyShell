@@ -100,6 +100,9 @@ void print_history(CommandParser* parser, History* history) {
         return;
     }
 
+    printf("\n*** HISTORY ***\n");
+    printf("---------------\n");
+
     for (int i = 0; i < history->size; i++) {
         printf("#%d %s\n", i, history->table[i]);
     }

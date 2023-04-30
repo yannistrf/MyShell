@@ -6,12 +6,16 @@
 #include "sys_cmd.h"
 #include "alias.h"
 #include "history.h"
+#include "help.h"
 
 // Given a string, returns the sys_cmd, if there is one
 // If there is not one returns 0
 SysCmd is_sys_cmd(char* cmd) {
     if (!strcmp(cmd, "exit"))
         return EXIT;
+    
+    if (!strcmp(cmd, "help"))
+        return HELP;
     
     if (!strcmp(cmd, "cd"))
         return CD;
@@ -62,6 +66,9 @@ void exec_sys_cmd(SysCmd cmd, MyShell* sh) {
     switch (cmd) {
         case EXIT:
             sys_exit(sh);
+            break;
+        case HELP:
+            help(&sh->parser);
             break;
         case CD:
             sys_cd(&sh->parser);

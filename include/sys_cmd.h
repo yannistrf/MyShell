@@ -9,6 +9,7 @@
 typedef enum {
 
     EXIT=1,     // Start from 1, 0 means not a sys_cmd
+    HELP,
     CD,
     CREATEALIAS,
     DESTROYALIAS,
