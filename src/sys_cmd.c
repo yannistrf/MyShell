@@ -68,22 +68,22 @@ void exec_sys_cmd(SysCmd cmd, MyShell* sh) {
             sys_exit(sh);
             break;
         case HELP:
-            help(&sh->parser);
+            sys_help(&sh->parser);
             break;
         case CD:
             sys_cd(&sh->parser);
             break;
         case HISTORY:
-            print_history(&sh->parser, &sh->history);
+            sys_history(&sh->parser, &sh->history);
             break;
         case CREATEALIAS:
-            create_alias(&sh->parser, &sh->aliases);
+            sys_createalias(&sh->parser, &sh->aliases);
             break;
         case DESTROYALIAS:
-            destroy_alias(&sh->parser, &sh->aliases);
+            sys_destroyalias(&sh->parser, &sh->aliases);
             break;
         case PRINTALIASES:
-            print_aliases(&sh->parser, &sh->aliases);
+            sys_printaliases(&sh->parser, &sh->aliases);
             break;
         default:
             break;

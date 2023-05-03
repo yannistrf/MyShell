@@ -42,6 +42,8 @@ taken from the user, there will be an attempt to clean any finished processes.
 This is happening through the waitpid call with the WNOHANG flag which doesn't
 block the execution of the program. In that way, there are no zombie processes
 left.
+Note that for an expression to run on the background it needs to end with a '&'
+and to be space seperated with the previous word.
 
 ## Wild characters (wildchar.c)
 When there are arguments with wild characters in them, we need to check for any
@@ -65,7 +67,8 @@ SIGTSTP signals. On the other hand, when a child is created, inheriting the same
 behavior, we change back to the default handlers for those signals. The child
 processes will receive the signal without the parent taking any action since they
 all belong to the same process group and the signals received from the parent
-are distributed to the rest of the processes too.
+are distributed to the rest of the processes too. Press Ctrl+C (SIGINT) and Ctrl+Z
+(SIGTSTP) to test it.
 
 ## History (history.c)
 The command history can be shown to the user by executing the "history" command.

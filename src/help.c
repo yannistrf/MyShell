@@ -13,7 +13,7 @@ char* cmd_desc[] = {
 };
 
 
-void help(CommandParser* parser) {
+void sys_help(CommandParser* parser) {
     
     if (parser->arg_size > 1) {
         fprintf(stderr, "help: too many arguments\n");
@@ -22,6 +22,7 @@ void help(CommandParser* parser) {
 
     int size = sizeof(cmd_desc) / sizeof(char*);
 
+    printf("\n");
     for (int i = 0; i < size; i++)
         printf("%s\n", cmd_desc[i]);
 }

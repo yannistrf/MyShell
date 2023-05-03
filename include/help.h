@@ -2,4 +2,4 @@
 
 #include "parser.h"
 
-void help(CommandParser* parser);
+void sys_help(CommandParser* parser);

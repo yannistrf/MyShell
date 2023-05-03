@@ -35,9 +35,11 @@ int found_alias(char* str, Aliases* aliases) {
     return -1;
 }
 
-// Replaces alias with the appropriate command and updates the arguments
-// The alias-command will probably have some arguments of its own so we
-// need to mess with the arguments inside the parser
+/* 
+    Replaces alias with the appropriate command and updates the arguments
+    The alias-command will probably have some arguments of its own so we
+    need to mess with the arguments inside the parser.
+*/
 void replace_alias(CommandParser* parser, Aliases* aliases, int alias_no) {
 
     // We parse the alias-command to get the args
@@ -75,7 +77,7 @@ void replace_alias(CommandParser* parser, Aliases* aliases, int alias_no) {
     parser->arg_size = new_arg_size - 1 + parser->arg_size;
 }
 
-void create_alias(CommandParser* parser, Aliases* aliases) {
+void sys_createalias(CommandParser* parser, Aliases* aliases) {
 
     if (parser->arg_size != 3) {
         fprintf(stderr, "createalias: Usage createalias <alias> <command>\n");
@@ -106,7 +108,7 @@ void create_alias(CommandParser* parser, Aliases* aliases) {
     aliases->table[aliases->records-1][1] = command;
 }
 
-void destroy_alias(CommandParser* parser, Aliases* aliases) {
+void sys_destroyalias(CommandParser* parser, Aliases* aliases) {
     
     if (parser->arg_size < 2) {
         fprintf(stderr, "deletealias: too few arguments\n");
@@ -142,7 +144,7 @@ void destroy_alias(CommandParser* parser, Aliases* aliases) {
     }
 }
 
-void print_aliases(CommandParser* parser, Aliases* aliases) {
+void sys_printaliases(CommandParser* parser, Aliases* aliases) {
 
     if (parser->arg_size > 1) {
         fprintf(stderr, "printaliases: too many arguments\n");
