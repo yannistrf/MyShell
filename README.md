@@ -1,6 +1,4 @@
 # MyShell
-Ioannis Triantafyllopoulos sdi2000193
-
 A simple Unix based shell, implemented in C.
 To compile run "make" and then "./mysh" to execute. You can also run
 "make run" to compile and execute however the signal behavior may be
